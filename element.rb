@@ -14,10 +14,6 @@ class Element
     find_elements(req)
   end
 
-  def xml
-    @xml_representation
-  end
-
   def click
     @adb.exec_command "input tap #{center.x} #{center.y}"
   end
