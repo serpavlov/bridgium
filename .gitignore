@@ -1,2 +1,4 @@
 temp/*
 .DS_Store
+*.apk
+*.png
