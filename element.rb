@@ -18,6 +18,13 @@ class Element
     @adb.exec_command "input tap #{center.x} #{center.y}"
   end
 
+  def clear
+    @adb.exec_command 'input keyevent KEYCODE_MOVE_END'
+    text.size.times do
+      @adb.exec_command 'input keyevent KEYCODE_DEL'
+    end
+  end
+
   def long_click
     @adb.exec_command "input swipe #{center.x} #{center.y} #{center.x} #{center.y} 800"
   end
