@@ -22,11 +22,22 @@ class Adb
   end
   
   def install(path)
-    adb "install -r #{path}"
+    if already_installed? Aapt.package_name(path)
+      adb "install -r #{path}"
+    else
+      adb "install #{path}"
+    end
   end
-  
+
+  def already_installed?(package_name)
+    out = exec_command("pm list packages #{package_name}")
+    !out.empty?
+  end
+
   def uninstall(package_name)
-    adb "uninstall #{package_name}"
+    if already_installed? package_name
+      adb "uninstall #{package_name}"
+    end
   end
   
   def reinstall(path)
