@@ -36,15 +36,15 @@ class Element
   end
 
   def text
-    @xml_representation.attributes['text']
+    @xml_representation.get_attribute('text')
   end
 
   def checked?
-    @xml_representation.attributes['checked'] == 'true'
+    @xml_representation.get_attributes('checked') == 'true'
   end
 
   def content_desc
-    @xml_representation.attributes['content-desc']
+    @xml_representation.get_attribute('content-desc')
   end
 
   def top_left
