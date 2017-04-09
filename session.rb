@@ -45,11 +45,11 @@ class Session
 
   def find_elements_by_xpath(search_string)
     #REXML version
-    #view_hierarchy = Nokogiri::XML(source)
-    #result = view_hierarchy.xpath(search_string).map { |element| Element.new(element, @adb) }
+    #view_hierarchy = REXML::Document.new(source)
+    #result = view_hierarchy.get_elements(search_string).map { |element| Element.new(element, @adb) }
 
     #Nokogiri verison
-    view_hierarchy = REXML::Document.new(source)
-    result = view_hierarchy.get_elements(search_string).map { |element| Element.new(element, @adb) }
+    view_hierarchy = Nokogiri::XML(source)
+    result = view_hierarchy.xpath(search_string).map { |element| Element.new(element, @adb) }
   end
 end
