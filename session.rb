@@ -37,7 +37,7 @@ class Session
 
     case locator_type
     when :xpath      then find_elements_by_xpath(locator_value)
-    when :id         then find_elements_by_xpath("//*[@resource-id='#{locator_value}']")
+    when :id         then find_elements_by_xpath("//*[contains(@resource-id,'#{locator_value}')]")
     when :class_name then find_elements_by_xpath("//*[@class='#{locator_value}']")
     when :text       then find_elements_by_xpath("//*[@content-desc='#{locator_value}']")
     end
