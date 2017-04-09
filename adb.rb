@@ -1,6 +1,5 @@
 require_relative 'aapt'
 require 'open3'
-require 'rexml/document'
 
 class Adb
   def adb(command)
@@ -61,6 +60,5 @@ class Adb
     exec_command 'uiautomator dump /sdcard/source.xml'
     pull '/sdcard/source.xml', 'temp/current_source.xml'
     source = File.read('temp/current_source.xml')
-    view_hierarchy = REXML::Document.new(source)
   end
 end
