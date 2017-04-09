@@ -6,8 +6,8 @@ class Adb
   
   def adb(command)
     stdout, stderr, status = Open3.capture3("adb "+command)
-    if !stderr.empty?
-      raise "#{command} failed with message \n #{stderr}" 
+    if !stderr.empty? && !stderr.include?('Success')
+      raise "#{command} failed with message \n #{stderr}"
     end
     return stdout
   end
