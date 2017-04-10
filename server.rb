@@ -52,7 +52,7 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
 
       values_of_json = locator.values
       new_locator = Hash.new
-      new_locator[values_of_json.first.downcase.tr!(" ", "_").to_sym] = values_of_json.last
+      new_locator[values_of_json.first.downcase.tr(" ", "_").to_sym] = values_of_json.last
       found_element = sessions[uuid][:session].element(new_locator)
 
       el_uuid = SecureRandom.uuid
@@ -81,7 +81,7 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
 
       values_of_json = locator.values
       new_locator = Hash.new
-      new_locator[values_of_json.first.downcase.tr!(" ", "_").to_sym] = values_of_json.last
+      new_locator[values_of_json.first.downcase.tr(" ", "_").to_sym] = values_of_json.last
       found_elements = sessions[uuid][:session].elements(new_locator)
 
       array_of_els_uuid = Array.new
