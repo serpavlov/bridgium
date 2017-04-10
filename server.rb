@@ -17,6 +17,27 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
     uuid = SecureRandom.uuid
     sessions[uuid] = Hash.new
     sessions[uuid][:session] = Session.new(uuid, nil)
+    server.mount_proc("/wd/hub/session/#{uuid}/back"){ |req, resp|
+      sessions[uuid][:session].back
+      resp_hash = Hash.new
+      resp_hash[:sessionId] = uuid
+      resp_hash[:status] = 0
+
+      resp['Content-Type'] = 'application/json'
+      resp.status = 200
+      resp.body = JSON.generate(resp_hash)
+    }
+
+    server.mount_proc("/wd/hub/session/#{uuid}/source"){ |req, resp|
+      resp_hash = Hash.new
+      resp_hash[:sessionId] = uuid
+      resp_hash[:status] = 0
+
+      resp_hash[:value] = sessions[uuid][:session].source
+      resp['Content-Type'] = 'application/json'
+      resp.status = 200
+      resp.body = JSON.generate(resp_hash)
+    }
     resp_hash = Hash.new
     resp_hash[:sessionId] = uuid
     resp_hash[:value] = new_session_hash

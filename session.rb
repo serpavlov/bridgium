@@ -26,6 +26,10 @@ class Session
     @uid
   end
 
+  def back
+    @adb.exec_command "input keyevent KEYCODE_BACK"
+  end
+
   def caps
     @capabilites
   end
