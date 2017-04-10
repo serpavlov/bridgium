@@ -20,6 +20,7 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
     resp_hash = Hash.new
     resp_hash[:sessionId] = uuid
     resp_hash[:value] = new_session_hash
+    resp_hash[:status] = 0
 
     resp['Content-Type'] = 'application/json'
     resp.status = 200
@@ -38,11 +39,15 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
 
       server.mount_proc("/wd/hub/session/#{uuid}/element/#{el_uuid}/click") do |req, resp|
         elements[el_uuid].click
+        resp_hash[:status] = 0
+        resp['Content-Type'] = 'application/json'
+        resp.body = JSON.generate(resp_hash)
         resp.status = 200
       end
 
       resp_hash = Hash.new
       resp_hash[:sessionId] = uuid
+      resp_hash[:status] = 0
       resp_hash[:value] = Hash.new
       resp_hash[:value][:ELEMENT] = el_uuid
       resp['Content-Type'] = 'application/json'
@@ -66,6 +71,9 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
 
         server.mount_proc("/wd/hub/session/#{uuid}/element/#{el_uuid}/click") do |req, resp|
           elements[el_uuid].click
+          resp_hash[:status] = 0
+          resp['Content-Type'] = 'application/json'
+          resp.body = JSON.generate(resp_hash)
           resp.status = 200
         end
       end
@@ -73,6 +81,7 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
       resp_hash = Hash.new
       resp_hash[:sessionId] = uuid
       resp_hash[:value] = Array.new
+      resp_hash[:status] = 0
       array_of_els_uuid.each do |element|
         el_hash = Hash.new
         el_hash[:ELEMENT] = element
