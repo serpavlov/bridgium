@@ -11,7 +11,14 @@ class Adb
   end
 
   def devices
-    adb('devices').split("\n")[1..-1]
+    parts = []
+    `adb devices`.lines.each do |line|
+      line.strip!
+      if (!line.empty? && line !~ /^List of devices/)
+        parts.push line.split.first
+      end
+    end
+    parts
   end
 
   def restart_adb
