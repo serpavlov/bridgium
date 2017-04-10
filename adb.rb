@@ -7,7 +7,7 @@ class Adb
   end
 
   def adb(command)
-    stdout, stderr, status = Open3.capture3("adb "+command)
+    stdout, stderr, status = Open3.capture3("adb -s #{@serial} " + command)
     if !stderr.empty? && !stderr.include?('Success')
       raise "#{command} failed with message \n #{stderr}"
     end
