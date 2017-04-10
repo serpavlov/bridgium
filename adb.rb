@@ -2,6 +2,10 @@ require_relative 'aapt'
 require 'open3'
 
 class Adb
+  def initialize(serial = devices.first)
+    @serial = serial
+  end
+
   def adb(command)
     stdout, stderr, status = Open3.capture3("adb "+command)
     if !stderr.empty? && !stderr.include?('Success')
