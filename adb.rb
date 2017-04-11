@@ -26,8 +26,8 @@ class Adb
   end
 
   def restart_adb
-    adb 'kill-server'
-    adb 'start-server'
+    `adb kill-server`
+    `adb start-server`
   end
 
   def install(path)
