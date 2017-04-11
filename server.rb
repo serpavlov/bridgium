@@ -17,74 +17,52 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
     uuid = SecureRandom.uuid
     sessions[uuid] = Hash.new
     sessions[uuid][:session] = Session.new(uuid, nil)
+
     server.mount_proc("/wd/hub/session/#{uuid}/back"){ |req, resp|
       sessions[uuid][:session].back
-      resp_hash = Hash.new
-      resp_hash[:sessionId] = uuid
-      resp_hash[:status] = 0
 
+      resp_hash = { sessionId: uuid, status: 0 }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
       resp.body = JSON.generate(resp_hash)
     }
 
     server.mount_proc("/wd/hub/session/#{uuid}/source"){ |req, resp|
-      resp_hash = Hash.new
-      resp_hash[:sessionId] = uuid
-      resp_hash[:status] = 0
-
-      resp_hash[:value] = sessions[uuid][:session].source
+      resp_hash = { sessionId: uuid, status: 0, value: sessions[uuid][:session].source }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
       resp.body = JSON.generate(resp_hash)
     }
-    resp_hash = Hash.new
-    resp_hash[:sessionId] = uuid
-    resp_hash[:value] = new_session_hash
-    resp_hash[:status] = 0
 
+    resp_hash ={ sessionId: uuid, value: new_session_hash, status: 0 }
     resp['Content-Type'] = 'application/json'
     resp.status = 200
     resp.body = JSON.generate(resp_hash)
 
     server.mount_proc("/wd/hub/session/#{uuid}/element") do |req, resp|
-      locator = JSON.parse(req.body)
-
-      values_of_json = locator.values
-      new_locator = Hash.new
-      new_locator[values_of_json.first.downcase.tr(" ", "_").to_sym] = values_of_json.last
-      found_element = sessions[uuid][:session].element(new_locator)
+      found_element = sessions[uuid][:session].element(parse_locator req.body)
 
       el_uuid = SecureRandom.uuid
       elements[el_uuid] = found_element
 
       server.mount_proc("/wd/hub/session/#{uuid}/element/#{el_uuid}/click") do |req, resp|
         elements[el_uuid].click
-        resp_hash[:status] = 0
+        resp_hash = { status: 0 }
         resp['Content-Type'] = 'application/json'
         resp.body = JSON.generate(resp_hash)
         resp.status = 200
       end
 
-      resp_hash = Hash.new
-      resp_hash[:sessionId] = uuid
-      resp_hash[:status] = 0
-      resp_hash[:value] = Hash.new
-      resp_hash[:value][:ELEMENT] = el_uuid
+      resp_hash = { sessionId: uuid, status: 0, value: { ELEMENT: el_uuid } }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
       resp.body = JSON.generate(resp_hash)
     end
 
     server.mount_proc("/wd/hub/session/#{uuid}/elements") do |req, resp|
-      locator = JSON.parse(req.body)
+      found_elements = sessions[uuid][:session].elements(parse_locator req.body)
 
-      values_of_json = locator.values
-      new_locator = Hash.new
-      new_locator[values_of_json.first.downcase.tr(" ", "_").to_sym] = values_of_json.last
-      found_elements = sessions[uuid][:session].elements(new_locator)
-
-      array_of_els_uuid = Array.new
+      array_of_els_uuid = []
       found_elements.each do |element|
         el_uuid = SecureRandom.uuid
         elements[el_uuid] = element
@@ -92,31 +70,29 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
 
         server.mount_proc("/wd/hub/session/#{uuid}/element/#{el_uuid}/click") do |req, resp|
           elements[el_uuid].click
-          resp_hash[:status] = 0
+          resp_hash ={ status: 0 }
           resp['Content-Type'] = 'application/json'
           resp.body = JSON.generate(resp_hash)
           resp.status = 200
         end
       end
 
-      resp_hash = Hash.new
-      resp_hash[:sessionId] = uuid
-      resp_hash[:value] = Array.new
-      resp_hash[:status] = 0
+      resp_hash = { sessionId: uuid, value: [], status: 0 }
+
       array_of_els_uuid.each do |element|
-        el_hash = Hash.new
-        el_hash[:ELEMENT] = element
+        el_hash = { ELEMENT: element }
         resp_hash[:value].push el_hash
       end
+
       resp['Content-Type'] = 'application/json'
       resp.status = 200
       resp.body = JSON.generate(resp_hash)
     end
   end
-  if req.request_method == 'DELETE'
-    uuid = JSON.parse(req.body)
-    server.umount("/session/#{uuid}")
-  end
+  #if req.request_method == 'DELETE'
+  #  uuid = JSON.parse(req.body)
+  #  server.umount("/session/#{uuid}")
+  #end
 }
 
 def new_session_hash
@@ -130,6 +106,13 @@ def new_session_hash
     resp_hash[:nativeEvents] = 'true'
     resp_hash[:rotatable] = 'true'
     resp_hash
+end
+
+def parse_locator(json)
+  hash_from_json = JSON.parse(json)
+
+  values_in_array = hash_from_json.values
+  new_locator = { values_in_array.first.downcase.tr(" ", "_").to_sym => values_in_array.last }
 end
 
 server.start
