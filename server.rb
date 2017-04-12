@@ -4,6 +4,7 @@ require 'pry'
 require 'webrick'
 require 'securerandom'
 require 'json'
+require 'base64'
 
 require_relative 'session'
 
@@ -22,6 +23,15 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
       @sessions[uuid][:session].back
 
       resp_hash = { sessionId: uuid, status: 0 }
+      resp['Content-Type'] = 'application/json'
+      resp.status = 200
+      resp.body = JSON.generate(resp_hash)
+    }
+
+    server.mount_proc("/wd/hub/session/#{uuid}/screenshot"){ |req, resp|
+      @sessions[uuid][:session].take_screenshot
+
+      resp_hash = { sessionId: uuid, value: Base64.encode64(File.read('temp/screenshot.png')), status: 0 }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
       resp.body = JSON.generate(resp_hash)

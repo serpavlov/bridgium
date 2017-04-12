@@ -22,6 +22,10 @@ class Session
     elements(req).first
   end
 
+  def take_screenshot
+    @adb.take_screenshot('temp/screenshot.png')
+  end
+
   def uid
     @uid
   end
