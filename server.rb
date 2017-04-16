@@ -9,6 +9,7 @@ require 'base64'
 require_relative 'session'
 
 server = WEBrick::HTTPServer.new(:Port=>4328)
+trap 'INT' do server.shutdown end
 
 @sessions = Hash.new
 @elements = Hash.new
