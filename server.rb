@@ -113,8 +113,8 @@ def add_click(server, session_uuid, el_uuid)
   end
 end
 
-def add_text(server, uuid, el_uuid)
-  server.mount_proc("/wd/hub/session/#{uuid}/element/#{el_uuid}/text") do |req, resp|
+def add_text(server, session_uuid, el_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/text") do |req, resp|
     resp_hash ={ status: 0, value: @elements[el_uuid].text }
     resp['Content-Type'] = 'application/json'
     resp.body = JSON.generate(resp_hash)
