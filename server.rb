@@ -53,10 +53,6 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
     add_element(server, uuid, @sessions[uuid][:session])
     add_elements(server, uuid, @sessions[uuid][:session])
   end
-  #if req.request_method == 'DELETE'
-  #  uuid = JSON.parse(req.body)
-  #  server.umount("/session/#{uuid}")
-  #end
 }
 
 def add_element(server, path, object)
