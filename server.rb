@@ -16,12 +16,21 @@ trap 'INT' do server.shutdown end
 
 server.mount_proc('/wd/hub/session'){ |req, resp|
   if req.request_method == 'POST'
+    server.logger.info "New session request"
+
     uuid = SecureRandom.uuid
     capabilites = JSON.parse(req.body)
+
+    server.logger.info "Creating session with capabilites: #{capabilites}"
+
     @sessions[uuid] = Hash.new
-    @sessions[uuid][:session] = Session.new(uuid, capabilites["desiredCapabilities"])
+    @sessions[uuid][:session] = Session.new(uuid, capabilites["desiredCapabilities"], server.logger)
+
+    server.logger.info "New session created"
+
 
     server.mount_proc("/wd/hub/session/#{uuid}/back"){ |req, resp|
+      server.logger.info 'pressing back button'
       @sessions[uuid][:session].back
 
       resp_hash = { sessionId: uuid, status: 0 }
@@ -31,6 +40,7 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
     }
 
     server.mount_proc("/wd/hub/session/#{uuid}/screenshot"){ |req, resp|
+      server.logger.info 'Taking screenshot'
       @sessions[uuid][:session].take_screenshot
 
       resp_hash = { sessionId: uuid, value: Base64.encode64(File.read('temp/screenshot.png')), status: 0 }
@@ -40,6 +50,7 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
     }
 
     server.mount_proc("/wd/hub/session/#{uuid}/source"){ |req, resp|
+      server.logger.info "Taking screen source"
       resp_hash = { sessionId: uuid, status: 0, value: @sessions[uuid][:session].source }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
@@ -58,6 +69,8 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
 
 def add_element(server, path, object)
   server.mount_proc("/wd/hub/session/#{path}/element") do |req, resp|
+    server.logger.info "Searching element with parameters: #{req.body}"
+
     found_element = object.element(parse_locator req.body)
 
     el_uuid = SecureRandom.uuid
@@ -72,6 +85,8 @@ def add_element(server, path, object)
     resp['Content-Type'] = 'application/json'
     resp.status = 200
     resp.body = JSON.generate(resp_hash)
+
+    server.logger.info "Resposing client with #{resp.body}"
   end
 end
 

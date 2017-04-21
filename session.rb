@@ -1,3 +1,4 @@
+require 'logger'
 require 'nokogiri'
 require 'rexml/document'
 
@@ -5,17 +6,24 @@ require_relative 'element'
 require_relative 'adb'
 
 class Session
-  def initialize(uid, capabilites)
-    @capabilites = capabilites
+  def initialize(uid, capabilites, logger)
     @uid = uid
+    @capabilites = capabilites
+    @logger = logger || Logger.new(STDOUT)
     @adb = Adb.new(capabilites['udid'])
     if @capabilites['app']
-      if @capabilites['fullReset'] == 'true'
-        @adb.reinstall(@capabilites['app']
+      if @capabilites['fullReset'] == true
+        @logger.info 'Reinstalling app'
+
+        @adb.reinstall(@capabilites['app'])
       end
-      if @capabilites['fullReset'] == 'false' || @capabilites['fullReset'] == nil
-        @adb.install(@capabilites['app']
+      if @capabilites['fullReset'] == false || @capabilites['fullReset'] == nil
+        @logger.info 'Installing app'
+
+        @adb.install(@capabilites['app'])
       end
+    else
+      @logger.info 'You have not add app to capabilites, OK'
     end
   end
 
