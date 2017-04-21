@@ -46,7 +46,7 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
       resp.body = JSON.generate(resp_hash)
     }
 
-    resp_hash = { sessionId: uuid, value: new_session_hash, status: 0 }
+    resp_hash = { sessionId: uuid, value: NEW_SESSION_HASH, status: 0 }
     resp['Content-Type'] = 'application/json'
     resp.status = 200
     resp.body = JSON.generate(resp_hash)
@@ -123,18 +123,14 @@ def add_text(server, session_uuid, el_uuid)
   end
 end
 
-def new_session_hash
-    resp_hash = Hash.new
-    resp_hash[:browserName] = 'Chrome'
-    resp_hash[:version] = '1.0'
-    resp_hash[:platform] = 'Android'
-    resp_hash[:javascriptEnabled] = 'false'
-    resp_hash[:cssSelectorsEnabled] = 'false'
-    resp_hash[:takesScreenshot] = 'true'
-    resp_hash[:nativeEvents] = 'true'
-    resp_hash[:rotatable] = 'true'
-    resp_hash
-end
+NEW_SESSION_HASH = { :browserName => 'Chrome',
+                     :version => '1.0',
+                     :platform => 'Android',
+                     :javascriptEnabled => 'false',
+                     :cssSelectorsEnabled => 'false',
+                     :takesScreenshot => 'true',
+                     :nativeEvents => 'true',
+                     :rotatable => 'true' }
 
 def parse_locator(json)
   hash_from_json = JSON.parse(json)
