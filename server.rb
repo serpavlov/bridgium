@@ -28,6 +28,14 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
 
     server.logger.info "New session created"
 
+    server.mount_proc("/wd/hub/session/#{uuid}/execute"){ |req, resp|
+      server.logger.info "Executing script #{req.body}"
+
+      resp_hash = { sessionid: uuid, value: @sessions[uuid][:session].execute(JSON.parse(req.body)), status: 0 }
+      resp['Content-Type'] = 'application/json'
+      resp.status = 200
+      resp.body = JSON.generate(resp_hash)
+    }
 
     server.mount_proc("/wd/hub/session/#{uuid}/back"){ |req, resp|
       server.logger.info 'pressing back button'

@@ -55,6 +55,18 @@ class Session
     @capabilites
   end
 
+  def execute(command)
+    if command['script'] == 'adb'
+      case command['args'].first
+      when "get_current_activity"         then result = @adb.get_current_activity
+      when "pull"                         then result = @adb.pull(command['args'][1], command['args'][2])
+      when "launch_package"               then result = @adb.launch_package(command['args'][1])
+      when "launch_package_with_activity" then result = @adb.launch_package_with_activity(command['args'][1], command['args'][2])
+      end
+    end
+    result
+  end
+
   private
 
   def find_elements(locator)
