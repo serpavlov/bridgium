@@ -17,8 +17,9 @@ trap 'INT' do server.shutdown end
 server.mount_proc('/wd/hub/session'){ |req, resp|
   if req.request_method == 'POST'
     uuid = SecureRandom.uuid
+    capabilites = JSON.parse(req.body)
     @sessions[uuid] = Hash.new
-    @sessions[uuid][:session] = Session.new(uuid, nil)
+    @sessions[uuid][:session] = Session.new(uuid, capabilites["desiredCapabilities"])
 
     server.mount_proc("/wd/hub/session/#{uuid}/back"){ |req, resp|
       @sessions[uuid][:session].back
