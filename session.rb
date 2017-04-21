@@ -17,13 +17,30 @@ class Session
 
         @adb.reinstall(@capabilites['app'])
       end
+
       if @capabilites['fullReset'] == false || @capabilites['fullReset'] == nil
         @logger.info 'Installing app'
 
         @adb.install(@capabilites['app'])
       end
+
+      @capabilites['appPackage'] = Aapt.package_name(@capabilites['app']) unless @capabilites['appPackage']
     else
       @logger.info 'You have not add app to capabilites, OK'
+    end
+
+    if @capabilites['appPackage']
+      @logger.info 'Launching the app'
+
+      if @capabilites['appActivity']
+        @adb.launch_package_with_activity(@capabilites['appPackage'], @capabilites['appActivity'])
+      else
+        @logger.info 'You have not add appActivity to capabilites, OK'
+
+        @adb.launch_package(@capabilites['appPackage'])
+      end
+    else
+      @logger.info 'You have not add appPackage to capabilites, OK'
     end
   end
 
