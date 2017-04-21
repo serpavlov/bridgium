@@ -2,8 +2,8 @@ require_relative 'aapt'
 require 'open3'
 
 class Adb
-  def initialize(serial = devices.first)
-    @serial = serial
+  def initialize(serial)
+    @serial = serial || devices.first
   end
 
   def adb(command)
