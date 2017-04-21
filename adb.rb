@@ -72,4 +72,17 @@ class Adb
     pull '/sdcard/source.xml', 'temp/current_source.xml'
     source = File.read('temp/current_source.xml')
   end
+
+  def launch_package(package)
+    exec_command "monkey -p #{package} 1"
+  end
+
+  def launch_package_with_activity(package, activity)
+    exec_command "am start -n #{package}/#{activity}"
+  end
+
+  def get_current_activity
+    out = exec_command 'dumpsys window windows'
+    package, activity = out.lines.grep(/mCurrentFocus/).first[/ (\S*)}/, 1].split('/')
+  end
 end
