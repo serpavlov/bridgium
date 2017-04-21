@@ -6,8 +6,17 @@ require_relative 'adb'
 
 class Session
   def initialize(uid, capabilites)
+    @capabilites = capabilites
     @uid = uid
-    @adb = Adb.new
+    @adb = Adb.new(capabilites['udid'])
+    if @capabilites['app']
+      if @capabilites['fullReset'] == 'true'
+        @adb.reinstall(@capabilites['app']
+      end
+      if @capabilites['fullReset'] == 'false' || @capabilites['fullReset'] == nil
+        @adb.install(@capabilites['app']
+      end
+    end
   end
 
   def source
