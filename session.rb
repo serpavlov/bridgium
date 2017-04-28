@@ -10,7 +10,7 @@ class Session
     @uid = uid
     @capabilites = capabilites
     @logger = logger || Logger.new(STDOUT)
-    @adb = Adb.new(capabilites['udid'])
+    @adb = Adb.new(capabilites['udid'], @logger)
     if @capabilites['app']
       if @capabilites['fullReset'] == true
         @logger.info 'Reinstalling app'
