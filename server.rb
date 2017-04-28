@@ -86,8 +86,7 @@ def add_element(server, path, object)
 
     add_element(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
     add_elements(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
-    add_click(server, path.split('/').first, el_uuid)
-    add_text(server, path.split('/').first, el_uuid)
+    add_subrequests(server, path.split('/').first, el_uuid)
 
     resp_hash = { sessionId: path.split('/').first, status: 0, value: { ELEMENT: el_uuid } }
     resp['Content-Type'] = 'application/json'
@@ -110,8 +109,7 @@ def add_elements(server, path, object)
 
       add_element(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
       add_elements(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
-      add_click(server, path.split('/').first, el_uuid)
-      add_text(server, path.split('/').first, el_uuid)
+      add_subrequests(server, path.split('/').first, el_uuid)
     end
 
     resp_hash = { sessionId: path.split('/').first, value: [], status: 0 }
@@ -127,10 +125,88 @@ def add_elements(server, path, object)
   end
 end
 
+def add_subrequests(server, path, el_uuid)
+  add_click(server, path, el_uuid)
+  add_text(server, path, el_uuid)
+  add_attribute(server, path, el_uuid)
+  add_clear(server, path, el_uuid)
+  add_displayed(server, path, el_uuid)
+  add_enabled(server, path, el_uuid)
+  add_size(server, path, el_uuid)
+  add_location(server, path, el_uuid)
+  add_value(server, path, el_uuid)
+end
+
 def add_click(server, session_uuid, el_uuid)
   server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/click") do |req, resp|
     @elements[el_uuid].click
-    resp_hash ={ status: 0 }
+    resp_hash = { status: 0 }
+    resp['Content-Type'] = 'application/json'
+    resp.body = JSON.generate(resp_hash)
+    resp.status = 200
+  end
+end
+
+def add_clear(server, session_uuid, el_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/clear") do |req, resp|
+    @elements[el_uuid].clear
+    resp_hash = { status: 0 }
+    resp['Content-Type'] = 'application/json'
+    resp.body = JSON.generate(resp_hash)
+    resp.status = 200
+  end
+end
+
+def add_displayed(server, session_uuid, el_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/displayed") do |req, resp|
+    resp_hash = { status: 0, value: @elements[el_uuid].displayed? }
+    resp['Content-Type'] = 'application/json'
+    resp.body = JSON.generate(resp_hash)
+    resp.status = 200
+  end
+end
+
+def add_enabled(server, session_uuid, el_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/enabled") do |req, resp|
+    resp_hash = { status: 0, value: @elements[el_uuid].enabled? }
+    resp['Content-Type'] = 'application/json'
+    resp.body = JSON.generate(resp_hash)
+    resp.status = 200
+  end
+end
+
+def add_size(server, session_uuid, el_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/size") do |req, resp|
+    resp_hash = { status: 0, value: @elements[el_uuid].size }
+    resp['Content-Type'] = 'application/json'
+    resp.body = JSON.generate(resp_hash)
+    resp.status = 200
+  end
+end
+
+def add_location(server, session_uuid, el_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/location") do |req, resp|
+    resp_hash = { status: 0, value: @elements[el_uuid].location }
+    resp['Content-Type'] = 'application/json'
+    resp.body = JSON.generate(resp_hash)
+    resp.status = 200
+  end
+end
+
+def add_value(server, session_uuid, el_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/value") do |req, resp|
+    requested_value = JSON.parse req.body
+    @elements[el_uuid].send_keys requested_value["value"].first
+    resp_hash = { status: 0 }
+    resp['Content-Type'] = 'application/json'
+    resp.body = JSON.generate(resp_hash)
+    resp.status = 200
+  end
+end
+
+def add_attribute(server, session_uuid, el_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/attribute") do |req, resp|
+    resp_hash = { status: 0, value: @elements[el_uuid].attribute(req.path.split('/').last) }
     resp['Content-Type'] = 'application/json'
     resp.body = JSON.generate(resp_hash)
     resp.status = 200
@@ -139,7 +215,7 @@ end
 
 def add_text(server, session_uuid, el_uuid)
   server.mount_proc("/wd/hub/session/#{session_uuid}/element/#{el_uuid}/text") do |req, resp|
-    resp_hash ={ status: 0, value: @elements[el_uuid].text }
+    resp_hash = { status: 0, value: @elements[el_uuid].text }
     resp['Content-Type'] = 'application/json'
     resp.body = JSON.generate(resp_hash)
     resp.status = 200
