@@ -1,8 +1,11 @@
 require_relative 'aapt'
+require_relative 'wait'
 require 'open3'
 
 class Adb
-  def initialize(serial)
+  include Wait
+
+    wait(10, 'No devices, connect device please') { devices.first }
     @serial = serial || devices.first
   end
 
