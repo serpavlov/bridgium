@@ -12,6 +12,7 @@ class Adb
   end
 
   def adb(command)
+    wait(10, 'Connection to device has lost') { online? }
     command = "adb -s #{@serial} #{command}"
 
     @logger.info("[ADB]: #{command}") if @logger
@@ -21,6 +22,10 @@ class Adb
       raise "#{command} failed with message \n #{stderr}"
     end
     return stdout
+  end
+
+  def online?
+    `adb -s #{@serial} get-state`.chomp == 'device'
   end
 
   def devices
