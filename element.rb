@@ -29,9 +29,12 @@ class Element
     @adb.exec_command "input swipe #{center.x} #{center.y} #{center.x} #{center.y} 800"
   end
 
+  def attribute(attr)
+    @xml_representation.get_attribute attr
+  end
+
   def send_keys(text)
     click
-    sleep 2
     @adb.exec_command "input text '#{text}'"
   end
 
@@ -39,13 +42,27 @@ class Element
     @xml_representation.get_attribute('text')
   end
 
-  def checked?
-    @xml_representation.get_attributes('checked') == 'true'
+  def enabled?
+    @xml_representation.get_attribute('enabled') == 'true'
   end
 
-  def content_desc
-    @xml_representation.get_attribute('content-desc')
+  def displayed?
+    @xml_representation.get_attribute('displayed') == 'true'
   end
+
+  def selected?
+    @xml_representation.get_attribute('selected') == 'true'
+  end
+
+  def location
+    { x: top_left.x, y: top_left.y }
+  end
+
+  def size
+    { width: width, height: height }
+  end
+
+  private
 
   def top_left
     Point.new(coordinates[0], coordinates[1])
@@ -66,8 +83,6 @@ class Element
   def center
     Point.new(top_left.x + width / 2, top_left.y + height / 2)
   end
-
-  private
 
   def coordinates
     @xml_representation.get_attribute('bounds').scan(/\d+/).map(&:to_i)
