@@ -5,12 +5,18 @@ require 'open3'
 class Adb
   include Wait
 
+  def initialize(serial, logger)
     wait(10, 'No devices, connect device please') { devices.first }
     @serial = serial || devices.first
+    @logger = logger
   end
 
   def adb(command)
-    stdout, stderr, status = Open3.capture3("adb -s #{@serial} " + command)
+    command = "adb -s #{@serial} #{command}"
+
+    @logger.info("[ADB]: #{command}") if @logger
+
+    stdout, stderr, status = Open3.capture3(command)
     if !stderr.empty? && !stderr.include?('Success')
       raise "#{command} failed with message \n #{stderr}"
     end
