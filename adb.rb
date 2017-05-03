@@ -76,6 +76,10 @@ class Adb
     adb "pull #{source_path} #{out_path}"
   end
 
+  def push(source_path, out_path)
+    adb "push #{source_path} #{out_path}"
+  end
+
   def take_screenshot(path)
     exec_command 'screencap -p /sdcard/screenshot.png'
     pull '/sdcard/screenshot.png', path
