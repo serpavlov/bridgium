@@ -10,7 +10,7 @@ class Session
     @uid = uid
     @capabilites = capabilites
     @logger = logger || Logger.new(STDOUT)
-    @adb = Adb.new(capabilites['udid'], @logger)
+    @adb = Adb.new(@capabilites['udid'], @logger, @capabilites['speedUp'] ? @capabilites['speedUp'] : false)
     if @capabilites['app']
       if @capabilites['fullReset'] == true
         @logger.info 'Reinstalling app'
@@ -45,7 +45,11 @@ class Session
   end
 
   def source
-    @adb.take_screen_source
+    if @capabilites['speedUp'] == true
+      @adb.uiautomator_source
+    else
+      @adb.take_screen_source
+    end
   end
 
   def elements(req)
