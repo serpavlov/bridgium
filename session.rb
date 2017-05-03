@@ -10,37 +10,40 @@ class Session
     @uid = uid
     @capabilites = capabilites
     @logger = logger || Logger.new(STDOUT)
-    @adb = Adb.new(@capabilites['udid'], @logger, @capabilites['speedUp'] ? @capabilites['speedUp'] : false)
-    if @capabilites['app']
-      if @capabilites['fullReset'] == true
-        @logger.info 'Reinstalling app'
+    device_udid = capabilites ? capabilites['udid'] : nil
+    @adb = Adb.new(device_udid, @logger, @capabilites['speedUp'] ? @capabilites['speedUp'] : false)
+    if @capabilites
+      if @capabilites['app']
+        if @capabilites['fullReset'] == true
+          @logger.info 'Reinstalling app'
 
-        @adb.reinstall(@capabilites['app'])
-      end
+          @adb.reinstall(@capabilites['app'])
+        end
 
-      if @capabilites['fullReset'] == false || @capabilites['fullReset'] == nil
-        @logger.info 'Installing app'
+        if @capabilites['fullReset'] == false || @capabilites['fullReset'] == nil
+          @logger.info 'Installing app'
 
-        @adb.install(@capabilites['app'])
-      end
+          @adb.install(@capabilites['app'])
+        end
 
-      @capabilites['appPackage'] = Aapt.package_name(@capabilites['app']) unless @capabilites['appPackage']
-    else
-      @logger.info 'You have not add app to capabilites, OK'
-    end
-
-    if @capabilites['appPackage']
-      @logger.info 'Launching the app'
-
-      if @capabilites['appActivity']
-        @adb.launch_package_with_activity(@capabilites['appPackage'], @capabilites['appActivity'])
+        @capabilites['appPackage'] = Aapt.package_name(@capabilites['app']) unless @capabilites['appPackage']
       else
-        @logger.info 'You have not add appActivity to capabilites, OK'
-
-        @adb.launch_package(@capabilites['appPackage'])
+        @logger.info 'You have not add app to capabilites, OK'
       end
-    else
-      @logger.info 'You have not add appPackage to capabilites, OK'
+
+      if @capabilites['appPackage']
+        @logger.info 'Launching the app'
+
+        if @capabilites['appActivity']
+          @adb.launch_package_with_activity(@capabilites['appPackage'], @capabilites['appActivity'])
+        else
+          @logger.info 'You have not add appActivity to capabilites, OK'
+
+          @adb.launch_package(@capabilites['appPackage'])
+        end
+      else
+        @logger.info 'You have not add appPackage to capabilites, OK'
+      end
     end
   end
 
@@ -112,3 +115,4 @@ class Session
     result = view_hierarchy.xpath(search_string).map { |element| Element.new(element, @adb) }
   end
 end
+
