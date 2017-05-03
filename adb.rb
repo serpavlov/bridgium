@@ -1,14 +1,22 @@
 require_relative 'aapt'
 require_relative 'wait'
 require 'open3'
+require 'jsonrpc-client'
 
 class Adb
   include Wait
 
-  def initialize(serial, logger)
+  def initialize(serial, logger, speed = false)
     wait(10, 'No devices, connect device please') { devices.first }
     @serial = serial || devices.first
     @logger = logger
+    if speed == true
+      push 'uiautomator/bundle.jar', '/data/local/tmp/'
+      push 'uiautomator/uiautomator-stub.jar', '/data/local/tmp/'
+      exec_command 'uiautomator runtest bundle.jar uiautomator-stub.jar -c com.github.uiautomatorstub.Stub'
+      adb 'forward tcp:9009 tcp:9008'
+      @client = JSONRPC::Client.new('http://localhost:9009/jsonrpc/0')
+    end
   end
 
   def adb(command)
@@ -89,6 +97,11 @@ class Adb
     exec_command 'uiautomator dump /sdcard/source.xml'
     pull '/sdcard/source.xml', 'temp/current_source.xml'
     File.read('temp/current_source.xml')
+  end
+
+  def uiautomator_source
+    pull @client.dumpWindowHierarchy(false, 'source.xml'), 'temp/current_source.xml'
+    source = File.read('temp/current_source.xml')
   end
 
   def launch_package(package)

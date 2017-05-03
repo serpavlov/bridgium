@@ -12,7 +12,7 @@ class Session
     @capabilites = capabilites
     @logger = logger || Logger.new(STDOUT)
     device_udid = capabilites ? capabilites['udid'] : nil
-    @adb = Adb.new(device_udid, @logger)
+    @adb = Adb.new(device_udid, @logger, @capabilites['speedUp'] ? @capabilites['speedUp'] : false)
     if @capabilites
       if @capabilites['app']
         if @capabilites['fullReset']
@@ -48,7 +48,11 @@ class Session
   end
 
   def source
-    @adb.take_screen_source
+    if @capabilites['speedUp'] == true
+      @adb.uiautomator_source
+    else
+      @adb.take_screen_source
+    end
   end
 
   def find_elements(req)
