@@ -77,51 +77,59 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
 
 def add_element(server, path, object)
   server.mount_proc("/wd/hub/session/#{path}/element") do |req, resp|
-    server.logger.info "Searching element with parameters: #{req.body}"
+    if req.request_method == 'POST'
+      server.logger.info "Searching element with parameters: #{req.body}"
 
-    found_element = object.element(parse_locator req.body)
+      found_element = object.element(parse_locator req.body)
 
-    el_uuid = SecureRandom.uuid
-    @elements[el_uuid] = found_element
+      if found_element
+        el_uuid = SecureRandom.uuid
+        @elements[el_uuid] = found_element
 
-    add_element(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
-    add_elements(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
-    add_subrequests(server, path.split('/').first, el_uuid)
+        add_element(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
+        add_elements(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
+        add_subrequests(server, path.split('/').first, el_uuid)
 
-    resp_hash = { sessionId: path.split('/').first, status: 0, value: { ELEMENT: el_uuid } }
-    resp['Content-Type'] = 'application/json'
-    resp.status = 200
-    resp.body = JSON.generate(resp_hash)
+        resp_hash = { sessionId: path.split('/').first, status: 0, value: { ELEMENT: el_uuid } }
+      else
+        resp_hash = { sessionId: path.split('/').first, status: 7 }
+      end
+      resp['Content-Type'] = 'application/json'
+      resp.status = 200
+      resp.body = JSON.generate(resp_hash)
 
-    server.logger.info "Resposing client with #{resp.body}"
+      server.logger.info "Resposing client with #{resp.body}"
+    end
   end
 end
 
 def add_elements(server, path, object)
   server.mount_proc("/wd/hub/session/#{path}/elements") do |req, resp|
-    found_elements = object.elements(parse_locator req.body)
+    if req.request_method == 'POST'
+      found_elements = object.elements(parse_locator req.body)
 
-    array_of_els_uuid = []
-    found_elements.each do |element|
-      el_uuid = SecureRandom.uuid
-      @elements[el_uuid] = element
-      array_of_els_uuid.push el_uuid
+      array_of_els_uuid = []
+      found_elements.each do |element|
+        el_uuid = SecureRandom.uuid
+        @elements[el_uuid] = element
+        array_of_els_uuid.push el_uuid
 
-      add_element(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
-      add_elements(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
-      add_subrequests(server, path.split('/').first, el_uuid)
+        add_element(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
+        add_elements(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
+        add_subrequests(server, path.split('/').first, el_uuid)
+      end
+
+      resp_hash = { sessionId: path.split('/').first, value: [], status: 0 }
+
+      array_of_els_uuid.each do |element|
+        el_hash = { ELEMENT: element }
+        resp_hash[:value].push el_hash
+      end
+
+      resp['Content-Type'] = 'application/json'
+      resp.status = 200
+      resp.body = JSON.generate(resp_hash)
     end
-
-    resp_hash = { sessionId: path.split('/').first, value: [], status: 0 }
-
-    array_of_els_uuid.each do |element|
-      el_hash = { ELEMENT: element }
-      resp_hash[:value].push el_hash
-    end
-
-    resp['Content-Type'] = 'application/json'
-    resp.status = 200
-    resp.body = JSON.generate(resp_hash)
   end
 end
 
