@@ -6,8 +6,7 @@ require_relative 'element'
 require_relative 'adb'
 
 class Session
-  def initialize(uid, capabilites, logger)
-    @uid = uid
+  def initialize(capabilites, logger)
     @capabilites = capabilites
     @logger = logger || Logger.new(STDOUT)
     device_udid = capabilites ? capabilites['udid'] : nil

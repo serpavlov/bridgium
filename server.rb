@@ -24,7 +24,7 @@ server.mount_proc('/wd/hub/session'){ |req, resp|
     server.logger.info "Creating session with capabilites: #{capabilites}"
 
     @sessions[uuid] = Hash.new
-    @sessions[uuid][:session] = Session.new(uuid, capabilites["desiredCapabilities"], server.logger)
+    @sessions[uuid][:session] = Session.new(capabilites["desiredCapabilities"], server.logger)
 
     server.logger.info "New session created"
 
