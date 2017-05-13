@@ -10,7 +10,7 @@ class Adb
     wait(10, 'No devices, connect device please') { devices.first }
     @serial = serial || devices.first
     @logger = logger
-    if speed == true
+    if speed
       push 'uiautomator/bundle.jar', '/data/local/tmp/'
       push 'uiautomator/uiautomator-stub.jar', '/data/local/tmp/'
       exec_command 'uiautomator runtest bundle.jar uiautomator-stub.jar -c com.github.uiautomatorstub.Stub'
@@ -29,7 +29,7 @@ class Adb
     if !stderr.empty? && !stderr.include?('Success')
       raise "#{command} failed with message \n #{stderr}"
     end
-    return stdout
+    stdout
   end
 
   def online?
@@ -40,7 +40,7 @@ class Adb
     parts = []
     `adb devices`.lines.each do |line|
       line.strip!
-      if (!line.empty? && line !~ /^List of devices/)
+      if !line.empty? && line !~ /^List of devices/
         parts.push line.split.first
       end
     end
@@ -96,12 +96,13 @@ class Adb
   def take_screen_source
     exec_command 'uiautomator dump /sdcard/source.xml'
     pull '/sdcard/source.xml', 'temp/current_source.xml'
-    source = File.read('temp/current_source.xml')
+    File.read('temp/current_source.xml')
   end
 
   def uiautomator_source
-    pull @client.dumpWindowHierarchy(false, 'source.xml'), 'temp/current_source.xml'
-    source = File.read('temp/current_source.xml')
+    pull(@client.dumpWindowHierarchy(false, 'source.xml'),
+         'temp/current_source.xml')
+    File.read('temp/current_source.xml')
   end
 
   def launch_package(package)
@@ -112,8 +113,8 @@ class Adb
     exec_command "am start -n #{package}/#{activity}"
   end
 
-  def get_current_activity
+  def current_activity
     out = exec_command 'dumpsys window windows'
-    package, activity = out.lines.grep(/mCurrentFocus/).first[/ (\S*)}/, 1].split('/')
+    out.lines.grep(/mCurrentFocus/).first[/ (\S*)}/, 1].split('/')
   end
 end

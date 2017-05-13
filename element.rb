@@ -1,4 +1,7 @@
+require_relative 'searcher'
+
 class Element
+  include Searcher
   Point = Struct.new(:x, :y)
 
   def initialize(xml_representation, adb)
@@ -11,7 +14,7 @@ class Element
   end
 
   def elements(req)
-    find_elements(req)
+    find_elements(@xml_representation, req)
   end
 
   def click
@@ -86,27 +89,6 @@ class Element
 
   def coordinates
     @xml_representation.get_attribute('bounds').scan(/\d+/).map(&:to_i)
-  end
-
-  def find_elements(locator)
-    locator_type = locator.first.first
-    locator_value = locator.first.last
-
-    case locator_type
-    when :xpath      then find_elements_by_xpath(locator_value)
-    when :id         then find_elements_by_xpath("//*[@resource-id='#{locator_value}']")
-    when :class_name then find_elements_by_xpath("//*[@class='#{locator_value}']")
-    when :text       then find_elements_by_xpath("//*[@content-desc='#{locator_value}']")
-    end
-  end
-
-  def find_elements_by_xpath(search_string)
-    view_hierarchy = @xml_representation
-    #REXML version
-    #result = view_hierarchy.get_elements(view_hierarchy.xpath + search_string).map { |element| Element.new(element, @adb) }
-
-    #Nokogiri verison
-    result = view_hierarchy.xpath(view_hierarchy.path + search_string).map { |element| Element.new(element, @adb) }
   end
 end
 
