@@ -7,6 +7,7 @@ require 'json'
 require 'base64'
 
 require_relative 'session'
+require_relative 'webrick'
 
 server = WEBrick::HTTPServer.new(Port: 4328)
 trap('INT') { server.shutdown }
