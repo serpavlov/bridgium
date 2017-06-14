@@ -7,13 +7,12 @@ require_relative 'searcher'
 
 class Session
   include Searcher
+
   def initialize(capabilites, logger)
     @capabilites = capabilites
     @logger = logger || Logger.new(STDOUT)
     device_udid = capabilites ? capabilites['udid'] : nil
-    @adb = Adb.new(device_udid,
-                   @logger,
-                   @capabilites['speedUp'] ? @capabilites['speedUp'] : false)
+    @adb = Adb.new(device_udid, @logger)
     if @capabilites
       if @capabilites['app']
         if @capabilites['fullReset']
@@ -49,11 +48,7 @@ class Session
   end
 
   def source
-    if @capabilites['speedUp']
-      @adb.uiautomator_source
-    else
-      @adb.take_screen_source
-    end
+    @adb.take_screen_source
   end
 
   def elements(req)
