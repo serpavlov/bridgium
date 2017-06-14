@@ -41,4 +41,9 @@ module WEBrick
     end
 
   end
+  module HTTPServlet
+    class ProcHandler
+      alias do_DELETE do_POST
+    end
+  end
 end

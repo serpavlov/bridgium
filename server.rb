@@ -13,7 +13,6 @@ server = WEBrick::HTTPServer.new(Port: 4328)
 trap('INT') { server.shutdown }
 
 @sessions = {}
-@elements = {}
 
 temp_hash = { browserName: 'Chrome',
               version: '1.0',
@@ -35,12 +34,14 @@ server.mount_proc('/wd/hub/session') do |req, resp|
 
     server.logger.info "Creating session with capabilites: #{capabilites}"
 
-    @sessions[uuid]
-    @sessions[uuid] = Session.new(capabilites['desiredCapabilities'],
+    @sessions[uuid] = {}
+    @sessions[uuid][:session] = Session.new(capabilites['desiredCapabilities'],
                                             server.logger)
+    @sessions[uuid][:elements] = {}
 
     server.logger.info 'New session created'
 
+    add_session(server, uuid)
     add_execute(server, uuid)
     add_screenshot(server, uuid)
     add_source(server, uuid)
@@ -52,8 +53,53 @@ server.mount_proc('/wd/hub/session') do |req, resp|
     resp.status = 200
     resp.body = JSON.generate(resp_hash)
 
-    add_element(server, uuid, @sessions[uuid])
-    add_elements(server, uuid, @sessions[uuid])
+    add_element(server, uuid, @sessions[uuid][:session])
+    add_elements(server, uuid, @sessions[uuid][:session])
+  end
+end
+
+def add_session(server, session_uuid)
+  server.mount_proc("/wd/hub/session/#{session_uuid}") do |req, resp|
+    if req.request_method == 'GET'
+      server.logger.info 'Client requiesting session capabilites'
+      resp_hash = { sessionid: session_uuid,
+                    value: @sessions[session_uuid][:session].caps,
+                    status: 0 }
+      resp['Content-Type'] = 'application/json'
+      resp.status = 200
+      resp.body = JSON.generate(resp_hash)
+    elsif req.request_method == 'DELETE'
+      server.logger.info 'Client deleting session'
+
+      @sessions[session_uuid][:elements].keys.each do |element_uuid|
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/element")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/elements")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/click")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/text")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/displayed")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/enabled")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/value")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/value")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/size")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/location")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/attribute")
+        server.umount("/wd/hub/session/#{session_uuid}/element/#{element_uuid}/clear")
+      end
+      server.umount("/wd/hub/session/#{session_uuid}")
+      server.umount("/wd/hub/session/#{session_uuid}/element")
+      server.umount("/wd/hub/session/#{session_uuid}/elements")
+      server.umount("/wd/hub/session/#{session_uuid}/execute")
+      server.umount("/wd/hub/session/#{session_uuid}/screenshot")
+      server.umount("/wd/hub/session/#{session_uuid}/back")
+      server.umount("/wd/hub/session/#{session_uuid}/source")
+
+      @sessions.delete session_uuid
+      resp_hash = { sessionid: session_uuid,
+                    status: 0 }
+      resp['Content-Type'] = 'application/json'
+      resp.status = 200
+      resp.body = JSON.generate(resp_hash)
+    end
   end
 end
 
@@ -63,7 +109,7 @@ def add_execute(server, session_uuid)
       server.logger.info "Executing script #{req.body}"
       command = JSON.parse(req.body)
       resp_hash = { sessionid: session_uuid,
-                    value: @sessions[session_uuid].execute(command),
+                    value: @sessions[session_uuid][:session].execute(command),
                     status: 0 }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
@@ -76,7 +122,7 @@ def add_screenshot(server, session_uuid)
   server.mount_proc("/wd/hub/session/#{session_uuid}/screenshot") do |req, resp|
     if req.request_method == 'GET'
       server.logger.info 'Taking screenshot'
-      @sessions[session_uuid].take_screenshot
+      @sessions[session_uuid][:session].take_screenshot
       resp_hash = { sessionId: session_uuid,
                     value: Base64.encode64(File.read('temp/screenshot.png')),
                     status: 0 }
@@ -91,7 +137,7 @@ def add_back(server, session_uuid)
   server.mount_proc("/wd/hub/session/#{session_uuid}/back") do |req, resp|
     if req.request_method == 'POST'
       server.logger.info 'pressing back button'
-      @sessions[session_uuid].back
+      @sessions[session_uuid][:session].back
 
       resp_hash = { sessionId: session_uuid, status: 0 }
       resp['Content-Type'] = 'application/json'
@@ -107,7 +153,7 @@ def add_source(server, session_uuid)
       server.logger.info 'Taking screen source'
       resp_hash = { sessionId: session_uuid,
                     status: 0,
-                    value: @sessions[session_uuid].source }
+                    value: @sessions[session_uuid][:session].source }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
       resp.body = JSON.generate(resp_hash)
@@ -124,10 +170,10 @@ def add_element(server, path, object)
 
       if found_element
         el_uuid = SecureRandom.uuid
-        @elements[el_uuid] = found_element
+        @sessions[path][:elements][el_uuid] = found_element
 
-        add_element(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
-        add_elements(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
+        add_element(server, "#{path}/element/#{el_uuid}", @sessions[path][:elements][el_uuid])
+        add_elements(server, "#{path}/element/#{el_uuid}", @sessions[path][:elements][el_uuid])
         add_subrequests(server, path.split('/').first, el_uuid)
 
         resp_hash = { sessionId: path.split('/').first,
@@ -156,11 +202,11 @@ def add_elements(server, path, object)
       array_of_els_uuid = []
       found_elements.each do |element|
         el_uuid = SecureRandom.uuid
-        @elements[el_uuid] = element
+        @sessions[path][:elements][el_uuid] = element
         array_of_els_uuid.push el_uuid
 
-        add_element(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
-        add_elements(server, "#{path}/element/#{el_uuid}", @elements[el_uuid])
+        add_element(server, "#{path}/element/#{el_uuid}", @sessions[path][:elements][el_uuid])
+        add_elements(server, "#{path}/element/#{el_uuid}", @sessions[path][:elements][el_uuid])
         add_subrequests(server, path.split('/').first, el_uuid)
       end
 
@@ -196,7 +242,7 @@ def add_click(server, session_uuid, el_uuid)
   path = "/wd/hub/session/#{session_uuid}/element/#{el_uuid}/click"
   server.mount_proc(path) do |req, resp|
     if req.request_method == 'POST'
-      @elements[el_uuid].click
+      @sessions[session_uuid][:elements][el_uuid].click
       resp_hash = { status: 0 }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
@@ -209,7 +255,7 @@ def add_clear(server, session_uuid, el_uuid)
   path = "/wd/hub/session/#{session_uuid}/element/#{el_uuid}/clear"
   server.mount_proc(path) do |req, resp|
     if req.request_method == 'POST'
-      @elements[el_uuid].clear
+      @sessions[session_uuid][:elements][el_uuid].clear
       resp_hash = { status: 0 }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
@@ -222,7 +268,7 @@ def add_displayed(server, session_uuid, el_uuid)
   path = "/wd/hub/session/#{session_uuid}/element/#{el_uuid}/displayed"
   server.mount_proc(path) do |req, resp|
     if req.request_method == 'GET'
-      resp_hash = { status: 0, value: @elements[el_uuid].displayed? }
+      resp_hash = { status: 0, value: @sessions[session_uuid][:elements][el_uuid].displayed? }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
       resp.status = 200
@@ -234,7 +280,7 @@ def add_enabled(server, session_uuid, el_uuid)
   path = "/wd/hub/session/#{session_uuid}/element/#{el_uuid}/enabled"
   server.mount_proc(path) do |req, resp|
     if req.request_method == 'GET'
-      resp_hash = { status: 0, value: @elements[el_uuid].enabled? }
+      resp_hash = { status: 0, value: @sessions[session_uuid][:elements][el_uuid].enabled? }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
       resp.status = 200
@@ -246,7 +292,7 @@ def add_size(server, session_uuid, el_uuid)
   path = "/wd/hub/session/#{session_uuid}/element/#{el_uuid}/size"
   server.mount_proc(path) do |req, resp|
     if req.request_method == 'GET'
-      resp_hash = { status: 0, value: @elements[el_uuid].size }
+      resp_hash = { status: 0, value: @sessions[session_uuid][:elements][el_uuid].size }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
       resp.status = 200
@@ -258,7 +304,7 @@ def add_location(server, session_uuid, el_uuid)
   path = "/wd/hub/session/#{session_uuid}/element/#{el_uuid}/location"
   server.mount_proc(path) do |req, resp|
     if req.request_method == 'GET'
-      resp_hash = { status: 0, value: @elements[el_uuid].location }
+      resp_hash = { status: 0, value: @sessions[session_uuid][:elements][el_uuid].location }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
       resp.status = 200
@@ -271,7 +317,7 @@ def add_value(server, session_uuid, el_uuid)
   server.mount_proc(path) do |req, resp|
     if req.request_method == 'POST'
       requested_value = JSON.parse req.body
-      @elements[el_uuid].send_keys requested_value['value'].first
+      @sessions[session_uuid][:elements][el_uuid].send_keys requested_value['value'].first
       resp_hash = { status: 0 }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
@@ -286,7 +332,7 @@ def add_attribute(server, session_uuid, el_uuid)
     if req.request_method == 'GET'
       requested_attribute = req.path.split('/').last
       resp_hash = { status: 0,
-                    value: @elements[el_uuid].attribute(requested_attribute) }
+                    value: @sessions[session_uuid][:elements][el_uuid].attribute(requested_attribute) }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
       resp.status = 200
@@ -298,7 +344,7 @@ def add_text(server, session_uuid, el_uuid)
   path = "/wd/hub/session/#{session_uuid}/element/#{el_uuid}/text"
   server.mount_proc(path) do |req, resp|
     if req.request_method == 'GET'
-      resp_hash = { status: 0, value: @elements[el_uuid].text }
+      resp_hash = { status: 0, value: @sessions[session_uuid][:elements][el_uuid].text }
       resp['Content-Type'] = 'application/json'
       resp.body = JSON.generate(resp_hash)
       resp.status = 200
