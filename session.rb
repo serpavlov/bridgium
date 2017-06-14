@@ -51,13 +51,13 @@ class Session
     @adb.take_screen_source
   end
 
-  def elements(req)
+  def find_elements(req)
     view_hierarchy = Nokogiri::XML(source)
-    find_elements(view_hierarchy, req)
+    find_els(view_hierarchy, req)
   end
 
-  def element(req)
-    elements(req).first
+  def find_element(req)
+    find_elements(req).first
   end
 
   def take_screenshot
@@ -89,4 +89,3 @@ class Session
     result
   end
 end
-

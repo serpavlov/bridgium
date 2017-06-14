@@ -35,8 +35,8 @@ server.mount_proc('/wd/hub/session') do |req, resp|
 
     server.logger.info "Creating session with capabilites: #{capabilites}"
 
-    @sessions[uuid] = {}
-    @sessions[uuid][:session] = Session.new(capabilites['desiredCapabilities'],
+    @sessions[uuid]
+    @sessions[uuid] = Session.new(capabilites['desiredCapabilities'],
                                             server.logger)
 
     server.logger.info 'New session created'
@@ -52,8 +52,8 @@ server.mount_proc('/wd/hub/session') do |req, resp|
     resp.status = 200
     resp.body = JSON.generate(resp_hash)
 
-    add_element(server, uuid, @sessions[uuid][:session])
-    add_elements(server, uuid, @sessions[uuid][:session])
+    add_element(server, uuid, @sessions[uuid])
+    add_elements(server, uuid, @sessions[uuid])
   end
 end
 
@@ -63,7 +63,7 @@ def add_execute(server, session_uuid)
       server.logger.info "Executing script #{req.body}"
       command = JSON.parse(req.body)
       resp_hash = { sessionid: session_uuid,
-                    value: @sessions[session_uuid][:session].execute(command),
+                    value: @sessions[session_uuid].execute(command),
                     status: 0 }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
@@ -76,7 +76,7 @@ def add_screenshot(server, session_uuid)
   server.mount_proc("/wd/hub/session/#{session_uuid}/screenshot") do |req, resp|
     if req.request_method == 'GET'
       server.logger.info 'Taking screenshot'
-      @sessions[session_uuid][:session].take_screenshot
+      @sessions[session_uuid].take_screenshot
       resp_hash = { sessionId: session_uuid,
                     value: Base64.encode64(File.read('temp/screenshot.png')),
                     status: 0 }
@@ -91,7 +91,7 @@ def add_back(server, session_uuid)
   server.mount_proc("/wd/hub/session/#{session_uuid}/back") do |req, resp|
     if req.request_method == 'POST'
       server.logger.info 'pressing back button'
-      @sessions[session_uuid][:session].back
+      @sessions[session_uuid].back
 
       resp_hash = { sessionId: session_uuid, status: 0 }
       resp['Content-Type'] = 'application/json'
@@ -107,7 +107,7 @@ def add_source(server, session_uuid)
       server.logger.info 'Taking screen source'
       resp_hash = { sessionId: session_uuid,
                     status: 0,
-                    value: @sessions[session_uuid][:session].source }
+                    value: @sessions[session_uuid].source }
       resp['Content-Type'] = 'application/json'
       resp.status = 200
       resp.body = JSON.generate(resp_hash)
@@ -120,7 +120,7 @@ def add_element(server, path, object)
     if req.request_method == 'POST'
       server.logger.info "Searching element with parameters: #{req.body}"
 
-      found_element = object.element(parse_locator(req.body))
+      found_element = object.find_element(parse_locator(req.body))
 
       if found_element
         el_uuid = SecureRandom.uuid
@@ -151,7 +151,7 @@ end
 def add_elements(server, path, object)
   server.mount_proc("/wd/hub/session/#{path}/elements") do |req, resp|
     if req.request_method == 'POST'
-      found_elements = object.elements(parse_locator(req.body))
+      found_elements = object.find_elements(parse_locator(req.body))
 
       array_of_els_uuid = []
       found_elements.each do |element|

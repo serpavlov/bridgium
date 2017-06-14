@@ -9,12 +9,12 @@ class Element
     @adb = adb
   end
 
-  def element(req)
-    elements(req).first
+  def find_element(req)
+    find_elements(req).first
   end
 
-  def elements(req)
-    find_elements(@xml_representation, req)
+  def find_elements(req)
+    find_els(@xml_representation, req)
   end
 
   def click

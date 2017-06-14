@@ -3,7 +3,7 @@ module Searcher
     mod.extend self
   end
 
-  def find_elements(view_hierarchy, locator)
+  def find_els(view_hierarchy, locator)
     locator_type = locator.first.first
     locator_value = locator.first.last
 
@@ -21,10 +21,10 @@ module Searcher
     end
     path = view_hierarchy.path
     search_string = path + search_string if path != '/'
-    find_elements_by_xpath(view_hierarchy, search_string)
+    find_els_by_xpath(view_hierarchy, search_string)
   end
 
-  def find_elements_by_xpath(view_hierarchy, search_string)
+  def find_els_by_xpath(view_hierarchy, search_string)
     view_hierarchy.xpath(search_string).map do |element|
       Element.new(element, @adb)
     end
