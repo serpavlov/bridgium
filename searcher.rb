@@ -14,10 +14,12 @@ module Searcher
       search_string = "//*[contains(@resource-id,'#{locator_value}')]"
     when :class_name
       search_string = "//*[@class='#{locator_value}']"
-    when :text
+    when :link_text
+      search_string = "//*[@text='#{locator_value}']"
+    when :accessibility_id
       search_string = "//*[@content-desc='#{locator_value}']"
     else
-      raise Error, 'Can find only by xpath, id, class name and text'
+      raise KeyError, 'Can find only by xpath, id, class name and text'
     end
     path = view_hierarchy.path
     search_string = path + search_string if path != '/'
