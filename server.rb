@@ -1,4 +1,5 @@
 require 'net/http'
+require 'argv'
 require 'pp'
 require 'pry'
 require 'webrick'
@@ -9,7 +10,17 @@ require 'base64'
 require_relative 'session'
 require_relative 'webrick'
 
-server = WEBrick::HTTPServer.new(Port: 4328)
+class String
+  def is_i?
+    /\A[-+]?\d+\z/ === self
+  end
+end
+
+port = { Port: 4328 } 
+
+port = { Port: ARGV.to_hash['port'].to_i } if !ARGV.empty? && ARGV.to_hash['port'].is_i? && ARGV.to_hash['port']
+
+server = WEBrick::HTTPServer.new(port)
 trap('INT') { server.shutdown }
 
 @sessions = {}
