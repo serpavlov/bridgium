@@ -1,4 +1,4 @@
-**# Bridgium**
+# Bridgium
 Selenium-compatible server for testing Android apps.
 
 Works under uiautomator.
