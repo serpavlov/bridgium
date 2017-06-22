@@ -91,12 +91,6 @@ class Adb
     File.read('temp/current_source.xml')
   end
 
-  def uiautomator_source
-    pull(@client.dumpWindowHierarchy(false, 'source.xml'),
-         'temp/current_source.xml')
-    File.read('temp/current_source.xml')
-  end
-
   def launch_package(package)
     exec_command "monkey -p #{package} 1"
   end
