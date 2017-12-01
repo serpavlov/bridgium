@@ -13,7 +13,9 @@ class Adb
     if speed == true
       push 'uiautomator/bundle.jar', '/data/local/tmp/'
       push 'uiautomator/uiautomator-stub.jar', '/data/local/tmp/'
-      exec_command 'uiautomator runtest bundle.jar uiautomator-stub.jar -c com.github.uiautomatorstub.Stub'
+      Thread.new do
+        exec_command 'uiautomator runtest bundle.jar uiautomator-stub.jar -c com.github.uiautomatorstub.Stub'
+      end
       adb 'forward tcp:9009 tcp:9008'
       @client = JSONRPC::Client.new('http://localhost:9009/jsonrpc/0')
     end
