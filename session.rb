@@ -1,5 +1,7 @@
 require 'logger'
+require 'base64'
 require 'nokogiri'
+require 'tmpdir'
 
 require_relative 'element'
 require_relative 'adb'
@@ -48,11 +50,11 @@ class Session
   end
 
   def source
-    if @capabilites['speedUp'] == true
-      @adb.uiautomator_source
-    else
-      @adb.take_screen_source
-    end
+    temp_dir = Dir.mktmpdir("bridgium-")
+    @adb.take_screen_source("#{temp_dir}/current_source.xml")
+    screen_source = File.read("#{temp_dir}/current_source.xml")
+    FileUtils.remove_entry(temp_dir)
+    screen_source
   end
 
   def find_elements(req)
@@ -65,7 +67,11 @@ class Session
   end
 
   def take_screenshot
-    @adb.take_screenshot('temp/screenshot.png')
+    temp_dir = Dir.mktmpdir("bridgium-")
+    @adb.take_screenshot("#{temp_dir}/screenshot.png")
+    screenshot = Base64.encode64(File.read("#{temp_dir}/screenshot.png"))
+    FileUtils.remove_entry(temp_dir)
+    screenshot
   end
 
   def back

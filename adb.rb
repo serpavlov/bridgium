@@ -95,19 +95,13 @@ class Adb
     pull '/sdcard/screenshot.png', path
   end
 
-  def take_screen_source
-    exec_command 'uiautomator dump /sdcard/source.xml'
-    pull '/sdcard/source.xml', 'temp/current_source.xml'
-    File.read('temp/current_source.xml')
-  end
-
-  def uiautomator_source
-    pull @client.dumpWindowHierarchy(false, 'source.xml'), 'temp/current_source.xml'
-    source = File.read('temp/current_source.xml')
-  end
-
-  def launch_package(package)
-    exec_command "monkey -p #{package} 1"
+  def take_screen_source(path)
+    unless @speed
+      exec_command 'uiautomator dump /sdcard/source.xml'
+      pull '/sdcard/source.xml', path
+    else
+      pull @client.dumpWindowHierarchy(false, 'source.xml'), path
+    end
   end
 
   def launch_package_with_activity(package, activity)
