@@ -9,5 +9,6 @@ When you test Android application with uiatomator-based frameworks, you will see
 
 ## Install
 - Set Android SDK tools and build-tools to PATH (adb and aapt needed)
+- Install gems argv, nokogiri, jsonrpc-client
 - Clone
 - Run ruby server.rb
