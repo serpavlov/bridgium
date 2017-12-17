@@ -1,4 +1,3 @@
-require_relative 'aapt'
 require_relative 'wait'
 require 'open3'
 require 'jsonrpc-client'
@@ -6,11 +5,12 @@ require 'jsonrpc-client'
 class Adb
   include Wait
 
-  def initialize(serial, logger, speed = false)
+  def initialize(capabilites: {} , logger: nil)
     wait(10, 'No devices, connect device please') { devices.first }
-    @serial = serial || devices.first
+    @speed = capabilites[:speedUp] ? capabilites[:speedUp] : false
+    @serial = capabilites[:udid] || devices.first
     @logger = logger
-    if speed == true
+    if @speed == true
       push 'uiautomator/bundle.jar', '/data/local/tmp/'
       push 'uiautomator/uiautomator-stub.jar', '/data/local/tmp/'
       Thread.new do
@@ -55,27 +55,11 @@ class Adb
   end
 
   def install(path)
-    if already_installed? Aapt.package_name(path)
-      adb "install -r #{path}"
-    else
-      adb "install #{path}"
-    end
-  end
-
-  def already_installed?(package_name)
-    out = exec_command("pm list packages #{package_name}")
-    !out.empty?
+    adb "install -r #{path}"
   end
 
   def uninstall(package_name)
-    if already_installed? package_name
-      adb "uninstall #{package_name}"
-    end
-  end
-
-  def reinstall(path)
-    uninstall(Aapt.package_name(path))
-    install(path)
+    adb "uninstall #{package_name}"
   end
 
   def exec_command(command)
@@ -104,8 +88,12 @@ class Adb
     end
   end
 
-  def launch_package_with_activity(package, activity)
-    exec_command "am start -n #{package}/#{activity}"
+  def launch_package(package, activity)
+    unless activity
+      exec_command "monkey -p #{package} 1"
+    else
+      exec_command "am start -n #{package}/#{activity}"
+    end
   end
 
   def current_activity

@@ -5,7 +5,6 @@ require 'pry'
 require 'webrick'
 require 'securerandom'
 require 'json'
-require 'base64'
 
 require_relative 'session'
 require_relative 'webrick'
@@ -16,7 +15,7 @@ class String
   end
 end
 
-port = { Port: 4328 } 
+port = { Port: 4328 }
 
 port = { Port: ARGV.to_hash['port'].to_i } if !ARGV.empty? && ARGV.to_hash['port'].is_i? && ARGV.to_hash['port']
 
@@ -47,8 +46,7 @@ server.mount_proc('/wd/hub/session') do |req, resp|
       server.logger.info "Creating session with capabilites: #{capabilites}"
 
       @sessions[uuid] = {}
-      @sessions[uuid][:session] = Session.new(capabilites['desiredCapabilities'],
-                                              server.logger)
+      @sessions[uuid][:session] = Session.new(capabilites: capabilites['desiredCapabilities'])
       @sessions[uuid][:elements] = {}
 
       server.logger.info 'New session created'
@@ -158,9 +156,8 @@ def add_screenshot(server, session_uuid)
     if req.path == "/wd/hub/session/#{session_uuid}/screenshot"
       if req.request_method == 'GET'
         server.logger.info 'Taking screenshot'
-        @sessions[session_uuid][:session].take_screenshot
         resp_hash = { sessionId: session_uuid,
-                      value: Base64.encode64(File.read('temp/screenshot.png')),
+                      value: @sessions[session_uuid][:session].take_screenshot,
                       status: 0 }
         resp['Content-Type'] = 'application/json'
         resp.status = 200

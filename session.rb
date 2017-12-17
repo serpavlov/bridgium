@@ -10,11 +10,10 @@ require_relative 'searcher'
 class Session
   include Searcher
 
-  def initialize(capabilites, logger)
+  def initialize(capabilites: {}, logger: nil)
     @capabilites = capabilites
     @logger = logger || Logger.new(STDOUT)
-    device_udid = capabilites ? capabilites['udid'] : nil
-    @adb = Adb.new(device_udid, @logger, @capabilites['speedUp'] ? @capabilites['speedUp'] : false)
+    @adb = Adb.new(capabilites: @capabilites, logger: @logger)
     if @capabilites
       if @capabilites['app']
         if @capabilites['fullReset']
@@ -82,6 +81,10 @@ class Session
     @capabilites
   end
 
+  def logs
+    @logger
+  end
+
   def execute(command)
     if command['script'] == 'adb'
       args = command['args']
@@ -93,7 +96,9 @@ class Session
       when 'launch_package'
         result = @adb.launch_package(args[1])
       when 'launch_package_with_activity'
-        result = @adb.launch_package_with_activity(args[1], args[2])
+        result = @adb.launch_package(args[1], args[2])
+      else
+        result = @adb.exec_command args.join
       end
     end
     result
